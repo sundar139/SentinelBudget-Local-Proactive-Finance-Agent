@@ -15,6 +15,7 @@ from psycopg import Connection
 from sentinelbudget.config import Settings, get_settings
 from sentinelbudget.db.init_db import run_migrations
 from sentinelbudget.db.repositories.accounts import Account, AccountRepository
+from sentinelbudget.db.repositories.goals import GoalRepository
 from sentinelbudget.db.repositories.session import transaction
 from sentinelbudget.db.repositories.users import User, UserRepository
 from sentinelbudget.db.schema import bootstrap_default_categories
@@ -26,6 +27,30 @@ from sentinelbudget.memory.service import SemanticMemoryService
 from sentinelbudget.review.service import ProactiveReviewService, build_review_service
 
 ReviewModeOption = Literal["daily", "weekly", "none"]
+
+_DEMO_GOAL_SEEDS: tuple[dict[str, Any], ...] = (
+    {
+        "title": "Build Emergency Fund",
+        "description": "Set aside cash to cover 3 months of essential expenses.",
+        "target_amount": Decimal("5000.00"),
+        "target_date": date(2026, 12, 31),
+        "status": "active",
+    },
+    {
+        "title": "Reduce Dining-Out Spending",
+        "description": "Bring dining-out costs down with a monthly spending cap.",
+        "target_amount": Decimal("300.00"),
+        "target_date": date(2026, 10, 31),
+        "status": "active",
+    },
+    {
+        "title": "Save for Travel",
+        "description": "Build a dedicated travel fund for a future trip.",
+        "target_amount": Decimal("1800.00"),
+        "target_date": date(2027, 3, 31),
+        "status": "active",
+    },
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -132,6 +157,36 @@ def _sync_goals(
 
     memory_service = _build_memory_service(settings)
     return memory_service.sync_goals(conn, user_id=user_id)
+
+
+def _normalize_goal_title(value: str) -> str:
+    return " ".join(value.split()).strip().casefold()
+
+
+def _seed_demo_goals(conn: Connection, user_id: UUID) -> int:
+    existing_goals = GoalRepository.list_by_user(conn, user_id=user_id, limit=500)
+    existing_titles = {_normalize_goal_title(item.title) for item in existing_goals}
+
+    inserted = 0
+    for goal_seed in _DEMO_GOAL_SEEDS:
+        title = str(goal_seed["title"])
+        normalized_title = _normalize_goal_title(title)
+        if normalized_title in existing_titles:
+            continue
+
+        GoalRepository.create(
+            conn,
+            user_id=user_id,
+            title=title,
+            description=str(goal_seed["description"]),
+            target_amount=goal_seed["target_amount"],
+            target_date=goal_seed["target_date"],
+            status=str(goal_seed["status"]),
+        )
+        existing_titles.add(normalized_title)
+        inserted += 1
+
+    return inserted
 
 
 def _run_review(
@@ -265,6 +320,8 @@ def bootstrap_demo_data(
             f"(account_id={account.account_id}, source_dataset={normalized_source_dataset}, "
             f"days={days}, seed={seed}): {exc}"
         ) from exc
+
+    _seed_demo_goals(conn, user.user_id)
 
     goal_sync_summary = _sync_goals(
         conn,

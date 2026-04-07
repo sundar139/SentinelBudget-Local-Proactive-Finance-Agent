@@ -4,9 +4,12 @@ from contextlib import contextmanager
 from datetime import UTC, date, datetime
 from decimal import Decimal
 from types import SimpleNamespace
+from typing import cast
 from uuid import UUID, uuid4
 
 import pytest
+from psycopg import Connection
+from sentinelbudget.config import Settings
 from sentinelbudget.db.repositories.accounts import Account
 from sentinelbudget.db.repositories.users import User
 from sentinelbudget.demo.bootstrap import (
@@ -31,8 +34,8 @@ def _fake_ingest_summary() -> IngestSummary:
 
 
 def test_run_demo_bootstrap_runs_migrations_then_bootstrap(monkeypatch) -> None:
-    fake_settings = SimpleNamespace(log_level="INFO")
-    fake_conn = object()
+    fake_settings = cast(Settings, SimpleNamespace(log_level="INFO"))
+    fake_conn = cast(Connection, object())
     called: dict[str, object] = {}
 
     @contextmanager
@@ -133,6 +136,10 @@ def test_bootstrap_demo_data_shapes_result(monkeypatch) -> None:
         _fake_ingest_synthetic_transactions,
     )
     monkeypatch.setattr(
+        "sentinelbudget.demo.bootstrap._seed_demo_goals",
+        lambda conn, user_id: 3,
+    )
+    monkeypatch.setattr(
         "sentinelbudget.demo.bootstrap._sync_goals",
         lambda conn, settings, user_id, sync_goals: None,
     )
@@ -142,8 +149,8 @@ def test_bootstrap_demo_data_shapes_result(monkeypatch) -> None:
     )
 
     result = bootstrap_demo_data(
-        conn=object(),
-        settings=SimpleNamespace(),
+        conn=cast(Connection, object()),
+        settings=cast(Settings, SimpleNamespace()),
         user_id=user_id,
         account_id=account_id,
         user_email="demo@example.com",
@@ -182,7 +189,7 @@ def test_ensure_user_warns_when_email_differs(monkeypatch) -> None:
     )
 
     user, created, warnings = _ensure_user(
-        conn=object(),
+        conn=cast(Connection, object()),
         user_id=existing_user_id,
         user_email="new@example.com",
     )
@@ -198,8 +205,8 @@ def test_bootstrap_demo_data_rejects_invalid_user_email() -> None:
 
     with pytest.raises(ValueError, match="user_email"):
         bootstrap_demo_data(
-            conn=object(),
-            settings=SimpleNamespace(),
+            conn=cast(Connection, object()),
+            settings=cast(Settings, SimpleNamespace()),
             user_id=user_id,
             account_id=account_id,
             user_email="not-an-email",
@@ -223,8 +230,8 @@ def test_bootstrap_demo_data_rejects_blank_source_dataset() -> None:
 
     with pytest.raises(ValueError, match="source_dataset"):
         bootstrap_demo_data(
-            conn=object(),
-            settings=SimpleNamespace(),
+            conn=cast(Connection, object()),
+            settings=cast(Settings, SimpleNamespace()),
             user_id=user_id,
             account_id=account_id,
             user_email="demo@example.com",
@@ -248,8 +255,8 @@ def test_bootstrap_demo_data_rejects_output_csv_directory(tmp_path) -> None:
 
     with pytest.raises(ValueError, match="output_csv"):
         bootstrap_demo_data(
-            conn=object(),
-            settings=SimpleNamespace(),
+            conn=cast(Connection, object()),
+            settings=cast(Settings, SimpleNamespace()),
             user_id=user_id,
             account_id=account_id,
             user_email="demo@example.com",
@@ -318,8 +325,8 @@ def test_bootstrap_demo_data_surfaces_ingest_failure_context(monkeypatch) -> Non
 
     with pytest.raises(RuntimeError, match="Synthetic ingest failed during demo bootstrap") as exc:
         bootstrap_demo_data(
-            conn=object(),
-            settings=SimpleNamespace(),
+            conn=cast(Connection, object()),
+            settings=cast(Settings, SimpleNamespace()),
             user_id=user_id,
             account_id=account_id,
             user_email="demo@example.com",

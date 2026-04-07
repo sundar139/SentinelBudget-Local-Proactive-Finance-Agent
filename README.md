@@ -246,6 +246,9 @@ Generate UUIDs first, then run:
 uv run sentinelbudget-demo-bootstrap --user-id <USER_UUID> --account-id <ACCOUNT_UUID> --seed 42
 ```
 
+Demo bootstrap seeds deterministic transactions plus a small set of realistic goals for the demo user.
+Use `--sync-goals` to immediately project those seeded goals into semantic memory.
+
 ### Run The UI
 
 Run from the repository root using the UI module path (`ui/app.py`):
