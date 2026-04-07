@@ -22,6 +22,10 @@ GoalLister = Callable[[Connection, UUID, int], list[Goal]]
 
 _ALLOWED_WINDOWS = {"last_7_days", "last_30_days", "month_to_date", "custom"}
 _ALLOWED_MEMORY_KINDS: set[str] = {"goal", "preference", "note"}
+_TOOL_ALIASES: dict[str, str] = {
+    "get_category_summary": "get_category_spend",
+    "get_spending_by_category": "get_category_spend",
+}
 
 
 class ToolRegistryError(RuntimeError):
@@ -203,7 +207,8 @@ class AgentToolRegistry:
         tool_name: str,
         arguments: dict[str, Any],
     ) -> ToolExecutionRecord:
-        tool = self._tools.get(tool_name)
+        resolved_tool_name = _TOOL_ALIASES.get(tool_name, tool_name)
+        tool = self._tools.get(resolved_tool_name)
         if tool is None:
             raise UnsupportedToolError(f"Unsupported tool requested: {tool_name}")
         if not isinstance(arguments, dict):
@@ -217,10 +222,10 @@ class AgentToolRegistry:
         try:
             output = tool.execute(conn, user_id, parsed_args)
         except Exception as exc:
-            raise ToolExecutionError(f"Tool {tool_name} execution failed: {exc}") from exc
+            raise ToolExecutionError(f"Tool {resolved_tool_name} execution failed: {exc}") from exc
 
         return ToolExecutionRecord(
-            tool_name=tool_name,
+            tool_name=resolved_tool_name,
             arguments=parsed_args,
             output=output,
         )
@@ -489,10 +494,15 @@ def _parse_optional_uuid_list(value: Any, field_name: str) -> list[UUID]:
     for raw in value:
         if not isinstance(raw, str):
             raise ValueError(f"{field_name} must contain only UUID strings")
+        cleaned = raw.strip()
+        if cleaned == "":
+            continue
         try:
-            out.append(UUID(raw))
-        except ValueError as exc:
-            raise ValueError(f"{field_name} must contain only UUID strings") from exc
+            out.append(UUID(cleaned))
+        except ValueError:
+            # Model-generated placeholders (for example "user_account_id") should not
+            # fail deterministic tool execution. Invalid entries are ignored.
+            continue
 
     return out
 

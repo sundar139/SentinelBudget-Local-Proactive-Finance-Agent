@@ -134,7 +134,7 @@ def test_tool_registry_recent_goals_is_normalized() -> None:
     registry = AgentToolRegistry(
         memory_service=cast(Any, _FakeMemoryService()),
         analytics_runner=_fake_analytics_runner,
-        goal_lister=lambda conn, user_id, limit: [goal],
+        goal_lister=lambda conn, user_id, limit: cast(Any, [goal]),
     )
 
     result = registry.execute_tool(
@@ -146,3 +146,42 @@ def test_tool_registry_recent_goals_is_normalized() -> None:
 
     assert result.output["count"] == 1
     assert result.output["goals"][0]["target_amount"] == "10000.00"
+
+
+def test_tool_registry_accepts_category_summary_alias() -> None:
+    registry = AgentToolRegistry(
+        memory_service=cast(Any, _FakeMemoryService()),
+        analytics_runner=_fake_analytics_runner,
+        goal_lister=lambda conn, user_id, limit: [],
+    )
+
+    result = registry.execute_tool(
+        conn=cast(Connection, object()),
+        user_id=uuid4(),
+        tool_name="get_category_summary",
+        arguments={},
+    )
+
+    assert result.tool_name == "get_category_spend"
+    assert "spending_by_category" in result.output
+
+
+def test_tool_registry_ignores_placeholder_account_ids() -> None:
+    registry = AgentToolRegistry(
+        memory_service=cast(Any, _FakeMemoryService()),
+        analytics_runner=_fake_analytics_runner,
+        goal_lister=lambda conn, user_id, limit: [],
+    )
+
+    result = registry.execute_tool(
+        conn=cast(Connection, object()),
+        user_id=uuid4(),
+        tool_name="get_category_spend",
+        arguments={
+            "window": "last_30_days",
+            "account_ids": ["user_account_id", "", "not-a-uuid"],
+        },
+    )
+
+    assert result.arguments["account_filter_ids"] == []
+    assert "spending_by_category" in result.output

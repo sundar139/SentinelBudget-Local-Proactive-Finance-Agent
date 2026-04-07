@@ -157,8 +157,6 @@ def _parse_tool_call(message_obj: dict[str, object]) -> ChatToolCall | None:
         raise ChatProviderResponseError("tool_calls must be a list")
     if len(raw_calls) == 0:
         return None
-    if len(raw_calls) > 1:
-        raise ChatProviderResponseError("Only one tool call per model turn is supported")
 
     raw_call = raw_calls[0]
     if not isinstance(raw_call, dict):

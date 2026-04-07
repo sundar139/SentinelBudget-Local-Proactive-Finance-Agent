@@ -221,3 +221,78 @@ def test_chat_service_ask_runtime_path_persists_history(
         limit=10,
     )
     assert [item.role for item in history_rows] == ["user", "assistant"]
+
+
+@pytest.mark.integration
+def test_chat_service_grounds_answer_with_placeholder_account_ids(
+    db_conn: Connection,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    bootstrap_default_categories(db_conn)
+
+    user = UserRepository.create(db_conn, email=f"chat-grounded-{uuid4()}@example.com")
+    account = AccountRepository.create(
+        db_conn,
+        user_id=user.user_id,
+        institution="Grounded Bank",
+        name="Main",
+        account_type="checking",
+        current_balance=Decimal("500.00"),
+    )
+    ingest_synthetic_transactions(
+        conn=db_conn,
+        account_id=account.account_id,
+        days=45,
+        seed=12,
+        start_date=date(2026, 2, 1),
+        source_dataset="chat-grounded",
+        output_csv=None,
+    )
+
+    session_id = uuid4()
+    dimension = SemanticMemoryRepository.get_embedding_dimension(db_conn)
+    memory_service = SemanticMemoryService(
+        DummyDeterministicEmbeddingProvider(dimension=dimension),
+        embedding_dimension=dimension,
+    )
+    provider = FakeDeterministicChatModelProvider(
+        scripted_responses=[
+            ChatModelResult(
+                content=None,
+                tool_call=ChatToolCall(
+                    name="get_category_summary",
+                    arguments={
+                        "window": "last_30_days",
+                        "account_ids": ["user_account_id"],
+                    },
+                ),
+            ),
+            ChatModelResult(
+                content='{"citations": [], "warnings": [], "structured_payload": {}}',
+                tool_call=None,
+            ),
+        ]
+    )
+
+    service = SentinelBudgetChatService(
+        settings=get_settings(),
+        provider=provider,
+        memory_service=memory_service,
+    )
+
+    @contextmanager
+    def _same_connection_transaction(_settings):
+        yield db_conn
+
+    monkeypatch.setattr("sentinelbudget.agent.service.transaction", _same_connection_transaction)
+
+    answer = service.ask(
+        user_id=user.user_id,
+        session_id=session_id,
+        message="Show me category spend this month",
+    )
+
+    assert answer.tools_used == ["get_category_spend"]
+    assert len(answer.citations) == 1
+    assert answer.citations[0].payload is not None
+    assert "grounded tool evidence" in answer.answer_text

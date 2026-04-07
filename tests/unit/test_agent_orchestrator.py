@@ -276,3 +276,44 @@ def test_orchestrator_uses_grounded_fallback_for_unstructured_final_output() -> 
 
     assert "grounded tool evidence" in answer.answer_text
     assert any("deterministic grounded fallback" in warning for warning in answer.warnings)
+
+
+def test_orchestrator_uses_grounded_fallback_when_structured_answer_text_missing() -> None:
+    provider = FakeDeterministicChatModelProvider(
+        scripted_responses=[
+            ChatModelResult(
+                content=None,
+                tool_call=ChatToolCall(
+                    name="get_category_summary",
+                    arguments={"account_ids": ["user_account_id"]},
+                ),
+            ),
+            ChatModelResult(
+                content='{"citations": [], "warnings": [], "structured_payload": {}}',
+                tool_call=None,
+            ),
+        ]
+    )
+    history = _InMemoryHistoryStore()
+    registry = AgentToolRegistry(
+        memory_service=cast(Any, _FakeMemoryService()),
+        analytics_runner=_fake_analytics_runner,
+        goal_lister=lambda conn, user_id, limit: [],
+    )
+    orchestrator = ConversationOrchestrator(
+        provider=provider,
+        history_store=history,
+        tool_registry=registry,
+    )
+
+    answer = orchestrator.run_turn(
+        conn=cast(Connection, object()),
+        user_id=uuid4(),
+        session_id=uuid4(),
+        user_message="How much did I spend by category?",
+    )
+
+    assert "grounded tool evidence" in answer.answer_text
+    assert answer.tools_used == ["get_category_spend"]
+    assert len(answer.citations) == 1
+    assert answer.citations[0].payload is not None

@@ -213,7 +213,7 @@ class ConversationOrchestrator:
         warnings = [*warnings, *parsed["warnings"]]
 
         answer_text = parsed["answer_text"]
-        if parsed["is_structured"] is False:
+        if parsed["is_structured"] is False or parsed["has_answer_text"] is False:
             answer_text = _build_unstructured_fallback_text(tool_records)
 
         if not tool_records and _likely_data_question(original_user_message):
@@ -328,6 +328,7 @@ def _parse_model_answer_payload(content: str | None) -> dict[str, Any]:
 
     answer_obj = payload_obj.get("answer_text")
     answer_text = answer_obj.strip() if isinstance(answer_obj, str) else ""
+    has_answer_text = answer_text != ""
     if answer_text == "":
         answer_text = "I could not generate a grounded response."
         parsed_warnings.append("answer_text missing in model JSON response")
@@ -367,6 +368,7 @@ def _parse_model_answer_payload(content: str | None) -> dict[str, Any]:
         "warnings": parsed_warnings,
         "structured_payload": structured_payload,
         "is_structured": True,
+        "has_answer_text": has_answer_text,
     }
 
 
