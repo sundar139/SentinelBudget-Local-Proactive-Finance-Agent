@@ -1,44 +1,118 @@
 ﻿# SentinelBudget
 
-![Python 3.11](https://img.shields.io/badge/Python-3.11-3776AB?logo=python&logoColor=white)
-![PostgreSQL 16+](https://img.shields.io/badge/PostgreSQL-16%2B-4169E1?logo=postgresql&logoColor=white)
-![Ollama Local](https://img.shields.io/badge/Ollama-Local-111111)
-![Ruff](https://img.shields.io/badge/Lint-Ruff-D7FF64)
-![Mypy](https://img.shields.io/badge/Types-Mypy-2A6DB2)
-![Tests](https://img.shields.io/badge/Tests-Pytest-0A9EDC)
+<p align="center">
+  <strong>Local-first proactive finance agent with deterministic analytics, grounded AI chat, semantic memory, and a self-hosted review workflow.</strong>
+</p>
 
-SentinelBudget is a local-first proactive finance agent that combines deterministic financial analytics with grounded LLM wording. It is designed for technical reviewers to clone, run locally, and inspect across CLI, Streamlit UI, and testable service boundaries.
+<p align="center">
+  Built with Python, PostgreSQL + pgvector, Ollama, and Streamlit.
+</p>
 
-## Project Overview
+<p align="center">
+  <img src="https://img.shields.io/badge/Python-3.11-3776AB?logo=python&logoColor=white" alt="Python 3.11" />
+  <img src="https://img.shields.io/badge/PostgreSQL-16+-4169E1?logo=postgresql&logoColor=white" alt="PostgreSQL 16+" />
+  <img src="https://img.shields.io/badge/pgvector-enabled-0F766E" alt="pgvector" />
+  <img src="https://img.shields.io/badge/Ollama-local-111827" alt="Ollama local" />
+  <img src="https://img.shields.io/badge/Streamlit-UI-FF4B4B?logo=streamlit&logoColor=white" alt="Streamlit UI" />
+  <img src="https://img.shields.io/badge/Quality-Ruff%20%7C%20Mypy%20%7C%20Pytest-6D28D9" alt="Quality gates" />
+</p>
 
-SentinelBudget solves a common gap in personal-finance tooling: many tools offer dashboards, but few provide reliable, explainable, and locally controlled proactive insights. This project treats deterministic data processing as the source of truth and uses local LLMs only for phrasing and interaction.
+---
 
-Core stack:
+## Overview
 
-- Python 3.11
-- PostgreSQL 16+ with pgvector
-- Alembic migrations
-- Streamlit UI
-- Ollama for local chat and embeddings
-- Ruff, Mypy, Pytest quality gates
+SentinelBudget is a **local-first personal finance agent** designed to combine **deterministic financial analytics** with **grounded LLM interaction**.
 
-## Motivation And Goals (Why)
+Most finance tools can show charts. Fewer can explain *why something matters*, *surface proactive insights*, and *do it without handing your data to a hosted AI service*. SentinelBudget is built around that gap.
 
-- Local-first privacy: keep data and inference local instead of relying on third-party hosted inference.
-- Deterministic correctness: financial calculations, deduplication, and anomaly detection are deterministic and testable.
-- Grounded AI behavior: chat answers are tied to tool outputs and citations rather than free-form generation.
-- Evaluator-ready operations: preflight checks, demo bootstrap command, and explicit CLI entrypoints reduce setup ambiguity.
-- Maintainability: repository/service layering and strict QA gates keep changes reviewable and safer over time.
+The system keeps **financial logic deterministic and testable**, while using a **local LLM through Ollama** for phrasing, chat interaction, and memory-backed assistance. The result is a project that is privacy-conscious, inspectable, and practical for reviewers who want something more credible than “AI but with a dashboard.”
 
-## Architecture And Intentional Design Decisions
+---
+
+## Product Screenshots
+
+### Overview dashboard
+
+![SentinelBudget Overview Dashboard](docs/images/overview-main.png)
+
+### Filtered overview and KPI summary
+
+![SentinelBudget Filtered Overview and KPI Summary](docs/images/overview-filters-kpis.png)
+
+### Cashflow trend and recurring charge analysis
+
+![SentinelBudget Cashflow Trend and Recurring Charge Analysis](docs/images/cashflow-trend.png)
+
+### Category spend breakdown
+
+![SentinelBudget Top Spending Categories](docs/images/top-spending-categories.png)
+
+---
+
+## Why This Project Exists
+
+SentinelBudget was built around a few core principles:
+
+- **Local-first by default**  
+  Financial data and inference stay on your machine.
+
+- **Deterministic where correctness matters**  
+  KPI calculations, recurring detection, anomaly logic, deduplication, and review generation are built from explicit service logic rather than model guesswork.
+
+- **Grounded AI instead of free-form AI**  
+  Chat is tied to tool outputs, evidence, and service boundaries to reduce hallucinated finance advice.
+
+- **Evaluator-friendly developer experience**  
+  The repo includes explicit CLI entrypoints, preflight checks, database initialization, deterministic demo bootstrap, and testable layers.
+
+- **Maintainable architecture**  
+  The codebase separates UI, services, repositories, analytics, review workflows, and agent orchestration into clear boundaries.
+
+---
+
+## Key Capabilities
+
+### 1. Transaction ingestion and normalization
+- Ingests CSV and synthetic transaction data
+- Normalizes raw records into a canonical transaction shape
+- Applies deterministic deduplication and controlled quarantine behavior for noisy inputs
+
+### 2. Deterministic analytics
+- Generates KPI summaries over defined time windows
+- Identifies recurring transaction candidates
+- Flags anomaly events through reproducible transformation logic
+
+### 3. Semantic memory with pgvector
+- Stores user goals and preference-style context
+- Supports vector-backed retrieval for better continuity in grounded interactions
+- Validates embedding dimensions and search flow through service and repository boundaries
+
+### 4. Grounded chat orchestration
+- Executes tool-backed chat turns
+- Preserves history and provenance
+- Returns warnings and evidence instead of pretending uncertainty does not exist
+
+### 5. Proactive review engine
+- Produces daily or weekly-style insights
+- Persists unread findings
+- Avoids duplicate insight spam using fingerprint-based idempotency
+
+### 6. Local UI and CLI workflows
+- Streamlit UI for local exploration
+- CLI commands for setup, ingestion, analytics, memory sync, chat, review, and health checks
+- Designed so major flows can run without depending on the UI
+
+---
+
+## Architecture
 
 ```mermaid
-graph TD
-    UI[CLI and Streamlit UI] --> SVC[Service Layer]
+flowchart TD
+    UI[Streamlit UI / CLI] --> SVC[Service Layer]
     SVC --> REPO[Repository Layer]
-    REPO --> PG[(PostgreSQL)]
+    REPO --> DB[(PostgreSQL)]
     SVC --> ANA[Deterministic Analytics]
-    SVC --> MEM[Semantic Memory via pgvector]
+    SVC --> MEM[Semantic Memory]
     SVC --> REV[Proactive Review Engine]
     SVC --> ORCH[Grounded Chat Orchestrator]
     ORCH --> TOOLS[Tool Registry]
@@ -47,230 +121,184 @@ graph TD
     TOOLS --> MEM
 ```
 
-Design choices:
+### Design decisions
+- **Deterministic-first pipeline** for ingestion, analytics, review findings, and deduplication
+- **Repository boundary** to make database side effects explicit and testable
+- **Provider abstraction** for local model integration and safer fallback behavior
+- **CLI-first operability** so flows are inspectable outside the UI
+- **Preflight checks and structured logging** for clearer setup and runtime diagnostics
 
-- Deterministic-first pipeline: ingestion, analytics, review findings, and dedup fingerprints are deterministic.
-- Repository boundary for DB writes and reads: makes side effects explicit and testable.
-- Local model integration through provider abstractions: model errors degrade safely to explicit warnings/fallback messaging.
-- CLI-first operability: every major workflow is invokable without UI dependencies.
-- Structured logging and preflight: failure modes are visible and actionable.
+---
 
-## Features And Implementation Details (What And How)
+## Tech Stack
 
-### 1) Ingestion And Normalization
+| Layer | Technology |
+|---|---|
+| Language | Python 3.11 |
+| Database | PostgreSQL 16+ |
+| Vector storage | pgvector |
+| Migrations | Alembic |
+| Local LLM runtime | Ollama |
+| UI | Streamlit |
+| Validation / config | Pydantic, pydantic-settings |
+| Quality gates | Ruff, Mypy, Pytest |
+| Packaging / workflow | `uv` |
 
-What it does:
+---
 
-- Ingests CSV and synthetic datasets.
-- Normalizes records into canonical transaction shape.
-- Applies deterministic dedup and quarantine behavior.
+## Project Structure
 
-Why implemented this way:
+```text
+.github/workflows/            CI workflows
+migrations/                   Alembic environment and revisions
+scripts/                      Helper scripts and utilities
+sentinelbudget/               Core backend package
+  agent/                      Grounded chat orchestration, providers, tools, history
+  analytics/                  KPI, recurring, and anomaly logic
+  db/                         Engine, schema bootstrap, repositories
+  demo/                       Deterministic demo bootstrap workflow
+  ingest/                     Loaders, normalization, validation, dedup, synthetic data
+  memory/                     Embeddings and semantic memory services
+  review/                     Proactive review generation and daemon logic
+tests/                        Unit, integration, and smoke tests
+ui/                           Streamlit app shell, pages, helpers, formatters
+```
 
-- Financial records often have inconsistent schemas and duplicates.
-- Deterministic canonicalization is required before meaningful analytics.
+---
 
-How implemented:
-
-- Canonical ingestion flows in sentinelbudget/ingest.
-- Duplicate prevention through trans_key and natural-key checks.
-- Quarantine ratio support for controlled failure in dirty datasets.
-
-### 2) Deterministic Analytics
-
-What it does:
-
-- Produces KPI summaries, recurring candidates, and anomaly events.
-
-Why implemented this way:
-
-- Reviewers and users need reproducible, explainable analytics outputs.
-
-How implemented:
-
-- Time-window resolution and KPI computation in sentinelbudget/analytics.
-- Recurring and anomaly modules operate on deterministic row transformations.
-
-### 3) Semantic Memory (pgvector)
-
-What it does:
-
-- Stores and retrieves semantically searchable memory items.
-- Syncs goals and preferences into vector-backed memory.
-
-Why implemented this way:
-
-- Long-running assistant workflows require contextual recall without dropping to opaque prompt state.
-
-How implemented:
-
-- Embedding provider abstraction with dimension checks.
-- Repository-enforced vector search ordering and shape validation.
-
-### 4) Grounded Chat Orchestration
-
-What it does:
-
-- Executes tool-backed chat turns and stores conversation history.
-- Returns tool provenance, warnings, and evidence blocks.
-
-Why implemented this way:
-
-- Prevents hallucinated finance answers by binding responses to tool outputs.
-
-How implemented:
-
-- Orchestrator and provider modules in sentinelbudget/agent.
-- Tool registry mediates deterministic service calls.
-- Safe-fail paths for model/tool outages retain transparency.
-
-### 5) Proactive Review And Insights
-
-What it does:
-
-- Runs daily/weekly review logic and persists unread insights.
-- Avoids duplicate insight spam via fingerprint dedup behavior.
-
-Why implemented this way:
-
-- Insight generation must be actionable and non-redundant.
-
-How implemented:
-
-- Review service in sentinelbudget/review composes analytics + memory context + deterministic drafting.
-- Insight repository uses uniqueness-safe insert/read behavior for idempotency.
-
-### 6) Streamlit UI
-
-What it does:
-
-- Provides local dashboard pages for overview, transactions, insights, memory, chat, and debug settings.
-
-Why implemented this way:
-
-- Enables fast local exploration while preserving CLI as source-of-truth interfaces.
-
-How implemented:
-
-- UI shell and page modules under ui.
-- Service calls flow through existing backend boundaries.
-- Graceful fallback paths surface optional dependency or runtime failures clearly.
-
-### 7) Preflight And Demo Bootstrap
-
-What it does:
-
-- Preflight validates config, DB connectivity, schema/migrations, optional model/tooling readiness.
-- Demo bootstrap seeds deterministic data and outputs next commands.
-
-Why implemented this way:
-
-- Reduces evaluator setup failures and makes local onboarding repeatable.
-
-How implemented:
-
-- sentinelbudget-preflight and sentinelbudget-demo-bootstrap entrypoints.
-- Distinct hard-failure versus warning semantics in preflight summary output.
-
-## Challenges And Issues Encountered
-
-- Configuration/help ergonomics:
-  Some CLI help paths previously required full environment configuration.
-  Resolution: help argument handling was hardened so --help works reliably without runtime configuration side effects.
-
-- Local model availability:
-  Ollama can be unavailable or have model-tag variance.
-  Resolution: preflight treats model checks as warnings and normalizes common tag variants for clearer diagnostics.
-
-- Idempotent operational flows:
-  Demo/bootstrap and review reruns can produce noisy duplicates if dedup assumptions are weak.
-  Resolution: stable fingerprints and repository-level duplicate handling keep repeated runs safe.
-
-- UI resiliency:
-  Local service failures can occur during startup and page actions.
-  Resolution: UI surfaces failures with actionable warnings while avoiding ambiguous silent failures.
-
-## Getting Started
+## Quick Start
 
 ### Prerequisites
 
+Make sure you have the following installed:
+
 - Python 3.11
-- uv
-- PostgreSQL 16+ with pgvector installed
-- Ollama installed locally
+- `uv`
+- PostgreSQL 16+ with `pgvector`
+- Ollama
 
-### Setup
+### 1. Clone the repository
 
-1. Install dependencies:
+```bash
+git clone https://github.com/sundar139/SentinelBudget-Local-Proactive-Finance-Agent.git
+cd SentinelBudget-Local-Proactive-Finance-Agent
+```
+
+### 2. Install dependencies
 
 ```bash
 uv sync
 ```
 
-1. Create environment file:
+### 3. Create your environment file
 
-PowerShell:
-
+**PowerShell**
 ```powershell
 Copy-Item .env.example .env
 ```
 
-Bash:
-
+**Bash**
 ```bash
 cp .env.example .env
 ```
 
-1. Fill required values in .env.
+### 4. Configure environment variables
 
-1. Validate environment with preflight:
+Fill in the values in `.env`.
+
+Important variables include:
+
+- PostgreSQL connection settings
+- Ollama base URL and chat model
+- Embedding model and dimensions
+- Review daemon scheduling settings
+
+### 5. Run preflight checks
 
 ```bash
 uv run sentinelbudget-preflight
 ```
 
-### Database Initialization
+### 6. Initialize the database
 
 ```bash
 uv run sentinelbudget-db-migrate
 uv run sentinelbudget-db-init
 ```
 
-Run `uv run sentinelbudget-db-migrate` after pulling updates to apply schema fixes before memory/review commands.
-
-### One-Command Demo Bootstrap
-
-Generate UUIDs first, then run:
-
-```bash
-uv run sentinelbudget-demo-bootstrap --user-id <USER_UUID> --account-id <ACCOUNT_UUID> --seed 42
-```
-
-Demo bootstrap seeds deterministic transactions plus a small set of realistic goals for the demo user.
-Use `--sync-goals` to immediately project those seeded goals into semantic memory.
-
-### Run The UI
-
-Run from the repository root using the UI module path (`ui/app.py`):
+### 7. Launch the UI
 
 ```bash
 uv run streamlit run ui/app.py
 ```
 
-### Useful CLI Commands
+---
+
+## Demo Bootstrap
+
+For a deterministic local demo setup, generate UUIDs and run:
 
 ```bash
+uv run sentinelbudget-demo-bootstrap --user-id <USER_UUID> --account-id <ACCOUNT_UUID> --seed 42
+```
+
+To also sync seeded goals into semantic memory:
+
+```bash
+uv run sentinelbudget-demo-bootstrap --user-id <USER_UUID> --account-id <ACCOUNT_UUID> --seed 42 --sync-goals
+```
+
+This seeds realistic demo transactions and a small set of goals for evaluator-friendly local testing.
+
+---
+
+## Useful Commands
+
+### Health and setup
+```bash
 uv run sentinelbudget-healthcheck
+uv run sentinelbudget-preflight
+uv run sentinelbudget-db-migrate
+uv run sentinelbudget-db-init
+```
+
+### Data and analytics
+```bash
 uv run sentinelbudget-ingest synthetic --account-id <ACCOUNT_UUID> --days 90 --seed 42
 uv run sentinelbudget-analytics all --user-id <USER_UUID> --window last_30_days
+```
+
+### Memory and chat
+```bash
 uv run sentinelbudget-memory sync-goals --user-id <USER_UUID>
 uv run sentinelbudget-chat ask --user-id <USER_UUID> --session-id <SESSION_UUID> --message "Am I overspending this month?"
+```
+
+### Review workflows
+```bash
 uv run sentinelbudget-review list-unread-insights --user-id <USER_UUID> --limit 20
 ```
 
-## Running Tests And Quality Checks
+---
 
-Run all quality gates:
+## Environment Configuration
+
+The repository includes an `.env.example` with the expected runtime settings, including:
+
+- App environment and logging
+- PostgreSQL host, port, database, credentials, and SSL mode
+- pgvector extension name
+- Ollama base URL, chat model, timeout, and agent limits
+- Review daemon timing
+- Embedding model, timeout, dimensions, and retrieval defaults
+
+This keeps local setup explicit instead of hiding system requirements behind vague startup failures.
+
+---
+
+## Quality and Testing
+
+Run the full quality gate locally:
 
 ```bash
 uv run ruff check .
@@ -278,61 +306,115 @@ uv run mypy sentinelbudget
 uv run pytest
 ```
 
-Integration-only suite:
+### Integration tests
 
-PowerShell:
-
+**PowerShell**
 ```powershell
 $env:SENTINEL_INTEGRATION_DB = "1"
 uv run pytest tests/integration
 ```
 
-Bash:
-
+**Bash**
 ```bash
 export SENTINEL_INTEGRATION_DB=1
 uv run pytest tests/integration
 ```
 
-## Deployment / Production Notes
+---
 
-- Primary target is local/self-hosted execution, not managed cloud inference by default.
-- Production-like readiness can be approximated locally via preflight + strict env configuration.
-- Secrets should be managed through environment variables and not committed to source control.
-- Postgres sizing and maintenance should match expected transaction volume and review cadence.
-- Optional components (Ollama/Streamlit) should remain observable via warning paths rather than hidden failures.
+## What Makes This Different
 
-## Project Structure
+SentinelBudget is not trying to be “a chatbot for your finances.”
 
-```text
-.github/workflows/            CI definitions
-migrations/                   Alembic env and revisions
-scripts/                      Convenience wrappers and bootstrap scripts
-sentinelbudget/               Backend package
-  agent/                      Grounded chat models, tools, orchestration, history
-  analytics/                  Deterministic KPI, recurring, anomaly logic
-  db/                         Engine, schema/bootstrap, repositories
-  demo/                       Deterministic demo bootstrap workflow
-  ingest/                     Loaders, normalizers, validators, dedup, synthetic data
-  memory/                     Embeddings and semantic memory service/repository
-  review/                     Proactive review generation, dedup, daemon
-tests/                        unit, integration, and smoke suites
-ui/                           Streamlit app shell, views, helpers, formatters
-```
+It is closer to a **local financial reasoning system** with an agent interface layered on top.
 
-## Roadmap / Future Improvements
+That distinction matters:
 
-- Add CI matrix with optional containerized integration database checks.
-- Expand evaluator artifacts (walkthrough video, reproducible benchmark traces).
-- Add operational dashboards for long-running daemon supervision.
-- Introduce stricter preflight mode to elevate optional warnings when needed.
+- The **financial logic is deterministic**
+- The **AI layer is grounded**
+- The **state is inspectable**
+- The **deployment model is self-hosted**
+- The **architecture is testable and reviewer-friendly**
 
-## Refactoring Summary
+That makes it better suited for technical demos, portfolio review, architecture interviews, and local-first AI discussions than a generic LLM wrapper with some charts bolted onto it.
 
-This refactoring/documentation pass focused on maintainability and evaluator clarity without expanding scope:
+---
 
-- Removed low-value inline script instructions and centralized run guidance in README.
-- Hardened .gitignore with categorized patterns for local artifacts, caches, logs, and secret variants.
-- Audited structure for professional layout; retained current package-first organization because it is already clear and standard for this stack.
-- Rewrote README with architecture rationale, implementation details, challenges, setup flows, quality gates, deployment notes, and project map.
-- Preserved existing runtime behavior and revalidated lint, type checks, and tests after cleanup.
+## Current Limitations
+
+This project intentionally targets **local and self-hosted execution** first.
+
+A few practical limitations remain:
+
+- Production cloud deployment is not the default path
+- Ollama availability and model tags can vary by local machine setup
+- Optional components can degrade into warnings, so local environment discipline still matters
+- The project should be positioned as a strong working foundation rather than a mature commercial product
+
+---
+
+## Roadmap
+
+Planned directions include:
+
+- stronger integration and CI coverage
+- better evaluator assets and demo materials
+- improved observability for long-running review workflows
+- stricter preflight modes for production-like validation
+
+---
+
+## Ideal Use Cases
+
+- Local-first AI portfolio project
+- Technical architecture showcase
+- Finance-focused agent systems demo
+- Grounded LLM orchestration example
+- Personal experimentation with pgvector + Ollama + deterministic analytics
+- Interview-ready project demonstrating system design discipline
+
+---
+
+## Repository Status
+
+This repository currently contains:
+
+- backend package structure under `sentinelbudget/`
+- Streamlit UI under `ui/`
+- tests, migrations, scripts, and CI workflow directories
+- a Python 3.11 package with explicit CLI entrypoints and strict typing and tooling orientation
+
+---
+
+## Contributing
+
+If you are extending the project, keep changes aligned with the existing design philosophy:
+
+- preserve deterministic financial logic
+- keep model usage grounded and inspectable
+- prefer explicit service boundaries over convenience shortcuts
+- maintain local reproducibility
+- keep quality gates passing before merging
+
+---
+
+## License
+
+Add a license section here once the repository license is finalized.
+
+---
+
+## Final Note
+
+SentinelBudget is strongest when presented as a **disciplined local-first AI systems project**, not just a budgeting app.
+
+That is the right story for this repo:
+- deterministic core
+- grounded agent layer
+- privacy-conscious local execution
+- clear developer ergonomics
+- architecture that stands up in review
+
+## License
+
+This project is licensed under the MIT License. See the [LICENSE](./LICENSE) file for details.
