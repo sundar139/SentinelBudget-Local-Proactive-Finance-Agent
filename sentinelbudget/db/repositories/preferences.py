@@ -6,6 +6,7 @@ from typing import Any
 from uuid import UUID, uuid4
 
 from psycopg import Connection
+from psycopg.types.json import Jsonb
 
 
 @dataclass(frozen=True, slots=True)
@@ -29,6 +30,7 @@ class UserPreferenceRepository:
         preference_id: UUID | None = None,
     ) -> UserPreference:
         resolved_preference_id = preference_id or uuid4()
+        preference_payload = Jsonb(preference_value)
 
         with conn.cursor() as cur:
             cur.execute(
@@ -42,7 +44,7 @@ class UserPreferenceRepository:
                 VALUES (%s, %s, %s, %s::jsonb)
                 RETURNING preference_id, user_id, preference_key, preference_value, created_at;
                 """,
-                (resolved_preference_id, user_id, preference_key, preference_value),
+                (resolved_preference_id, user_id, preference_key, preference_payload),
             )
             row = cur.fetchone()
 
@@ -66,6 +68,7 @@ class UserPreferenceRepository:
         preference_id: UUID | None = None,
     ) -> UserPreference:
         resolved_preference_id = preference_id or uuid4()
+        preference_payload = Jsonb(preference_value)
 
         with conn.cursor() as cur:
             cur.execute(
@@ -81,7 +84,7 @@ class UserPreferenceRepository:
                 DO UPDATE SET preference_value = EXCLUDED.preference_value
                 RETURNING preference_id, user_id, preference_key, preference_value, created_at;
                 """,
-                (resolved_preference_id, user_id, preference_key, preference_value),
+                (resolved_preference_id, user_id, preference_key, preference_payload),
             )
             row = cur.fetchone()
 
