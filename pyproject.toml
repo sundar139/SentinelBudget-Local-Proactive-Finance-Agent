@@ -1,0 +1,64 @@
+[build-system]
+requires = ["hatchling>=1.25.0"]
+build-backend = "hatchling.build"
+
+[project]
+name = "sentinelbudget"
+version = "0.1.0"
+description = "Local-first personal finance agent foundation"
+readme = "README.md"
+requires-python = ">=3.11,<3.12"
+dependencies = [
+  "pydantic>=2.7.0,<3.0.0",
+  "pydantic-settings>=2.3.0,<3.0.0",
+  "psycopg[binary]>=3.1.19,<4.0.0",
+  "streamlit>=1.39.0,<2.0.0",
+]
+
+[dependency-groups]
+dev = [
+  "alembic>=1.13.2,<2.0.0",
+  "mypy>=1.10.0,<2.0.0",
+  "pytest>=8.2.0,<9.0.0",
+  "ruff>=0.5.0,<1.0.0",
+]
+
+[project.scripts]
+sentinelbudget-healthcheck = "sentinelbudget.db.healthcheck:main"
+sentinelbudget-preflight = "sentinelbudget.preflight:main"
+sentinelbudget-db-init = "sentinelbudget.db.init_db:main"
+sentinelbudget-db-migrate = "sentinelbudget.db.init_db:migrate_main"
+sentinelbudget-ingest = "sentinelbudget.ingest.service:main"
+sentinelbudget-analytics = "sentinelbudget.analytics.service:main"
+sentinelbudget-memory = "sentinelbudget.memory.service:main"
+sentinelbudget-chat = "sentinelbudget.agent.service:main"
+sentinelbudget-review = "sentinelbudget.review.service:main"
+sentinelbudget-demo-bootstrap = "sentinelbudget.demo.bootstrap:main"
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+src = ["sentinelbudget", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+
+[tool.mypy]
+python_version = "3.11"
+files = ["sentinelbudget"]
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_return_any = true
+strict_equality = true
+
+[tool.pytest.ini_options]
+addopts = "-q"
+testpaths = ["tests"]
+markers = [
+  "integration: tests that require a live PostgreSQL database",
+]

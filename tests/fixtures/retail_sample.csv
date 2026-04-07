@@ -1,0 +1,4 @@
+transaction_date,merchant,total_amount,discount,category,currency,notes
+2026-01-05,City Grocer,120.00,10.00,Groceries,USD,Weekly groceries
+2026-01-06,Movie Theater,35.00,0.00,Entertainment,USD,Evening movie
+2026-01-07,Water Utility,55.20,0.00,Utilities,USD,Monthly bill

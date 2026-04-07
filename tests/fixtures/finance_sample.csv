@@ -1,0 +1,5 @@
+date,description,amount,category,institution,account,currency
+2026-01-01,Payroll Deposit,4500.00,Salary,Acme Corp,Primary Checking,USD
+2026-01-02,Monthly Rent,-1600.00,Rent,Landlord,Primary Checking,USD
+2026-01-03,Grocery Store,-85.42,Groceries,City Market,Primary Checking,USD
+2026-01-04,Bad Amount,invalid_amount,Groceries,City Market,Primary Checking,USD
