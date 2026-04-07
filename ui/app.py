@@ -17,7 +17,9 @@ from ui.state import (
     get_ui_services,
     get_unread_count_state,
     parse_uuid_text,
+    pop_sidebar_flash,
     set_active_user_id,
+    set_sidebar_flash,
     update_unread_count,
 )
 from ui.views import chat, insights, memory, overview, settings, transactions
@@ -36,6 +38,18 @@ def _render_sidebar_user_controls() -> UUID | None:
     st.sidebar.header("SentinelBudget")
     st.sidebar.caption("Local-first deterministic finance dashboard")
 
+    flash = pop_sidebar_flash()
+    if flash is not None:
+        level, message = flash
+        if level == "success":
+            st.sidebar.success(message)
+        elif level == "warning":
+            st.sidebar.warning(message)
+        elif level == "error":
+            st.sidebar.error(message)
+        else:
+            st.sidebar.info(message)
+
     input_value = st.sidebar.text_input(
         "Active user UUID",
         value=str(st.session_state.get("ui_active_user_id", "")),
@@ -49,7 +63,8 @@ def _render_sidebar_user_controls() -> UUID | None:
             st.sidebar.error("Enter a valid UUID.")
         else:
             set_active_user_id(parsed)
-            st.sidebar.success("Active user updated.")
+            set_sidebar_flash("Active user updated.")
+            st.rerun()
 
     recent_user_ids = get_recent_user_ids()
     if recent_user_ids:
@@ -62,6 +77,7 @@ def _render_sidebar_user_controls() -> UUID | None:
             parsed_recent = parse_uuid_text(selected_recent)
             if parsed_recent is not None:
                 set_active_user_id(parsed_recent)
+                set_sidebar_flash("Active user updated.")
                 st.rerun()
 
     return get_active_user_id()

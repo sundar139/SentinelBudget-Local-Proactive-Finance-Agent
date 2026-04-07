@@ -39,6 +39,7 @@ def ensure_session_state_defaults() -> None:
     st.session_state.setdefault("ui_chat_session_id", str(uuid4()))
     st.session_state.setdefault("ui_unread_count", None)
     st.session_state.setdefault("ui_previous_unread_count", None)
+    st.session_state.setdefault("ui_sidebar_flash", None)
 
 
 def set_active_user_id(user_id: UUID) -> None:
@@ -149,3 +150,32 @@ def get_previous_unread_count_state() -> int | None:
     if isinstance(value, int):
         return value
     return None
+
+
+def set_sidebar_flash(message: str, level: str = "success") -> None:
+    normalized_message = message.strip()
+    if normalized_message == "":
+        st.session_state["ui_sidebar_flash"] = None
+        return
+
+    st.session_state["ui_sidebar_flash"] = {
+        "level": level,
+        "message": normalized_message,
+    }
+
+
+def pop_sidebar_flash() -> tuple[str, str] | None:
+    raw_value = st.session_state.get("ui_sidebar_flash")
+    st.session_state["ui_sidebar_flash"] = None
+
+    if not isinstance(raw_value, dict):
+        return None
+
+    level = raw_value.get("level")
+    message = raw_value.get("message")
+    if not isinstance(level, str) or not isinstance(message, str):
+        return None
+    if message.strip() == "":
+        return None
+
+    return level, message
