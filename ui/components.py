@@ -9,7 +9,28 @@ from ui.formatters import format_datetime, severity_label
 
 
 def render_metric_cards(metrics: list[tuple[str, str, str | None]]) -> None:
-    columns = st.columns(len(metrics))
+    if not metrics:
+        return
+
+    st.markdown(
+        """
+        <style>
+        div[data-testid="stMetricValue"] {
+            font-size: 1.35rem !important;
+            line-height: 1.2 !important;
+            white-space: normal !important;
+            overflow: visible !important;
+            text-overflow: clip !important;
+        }
+        div[data-testid="stMetricLabel"] {
+            white-space: normal !important;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    columns = st.columns(len(metrics), gap="medium")
     for column, metric in zip(columns, metrics, strict=True):
         label, value, delta = metric
         column.metric(label=label, value=value, delta=delta)

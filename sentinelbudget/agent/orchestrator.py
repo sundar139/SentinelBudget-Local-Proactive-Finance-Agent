@@ -376,11 +376,105 @@ def _build_unstructured_fallback_text(tool_records: list[ToolExecutionRecord]) -
     if not tool_records:
         return "I could not produce a grounded response from the available model output."
 
+    primary = tool_records[-1]
+    summary = _build_grounded_summary_text(primary)
+    if summary is not None:
+        return summary
+
     tools = ", ".join(_ordered_unique([item.tool_name for item in tool_records]))
-    return (
-        "I received an unstructured model response, so I am returning only grounded tool "
-        f"evidence from: {tools}."
-    )
+    return f"I used grounded tool results from {tools}. See evidence for exact outputs."
+
+
+def _build_grounded_summary_text(record: ToolExecutionRecord) -> str | None:
+    window_label = _window_label(record.output)
+
+    if record.tool_name == "get_kpi_summary":
+        kpis = record.output.get("kpis")
+        if isinstance(kpis, dict):
+            income = kpis.get("total_income")
+            expenses = kpis.get("total_expenses")
+            net = kpis.get("net_cashflow")
+            return (
+                "Based on grounded KPI results"
+                f"{_window_suffix(window_label)}, total income is {income}, "
+                f"total expenses are {expenses}, and net cashflow is {net}."
+            )
+
+    if record.tool_name == "get_category_spend":
+        top_categories = record.output.get("top_spending_categories")
+        if isinstance(top_categories, list) and top_categories:
+            top_items: list[str] = []
+            for item in top_categories[:3]:
+                if not isinstance(item, dict):
+                    continue
+                category_name = item.get("category_name")
+                total_spend = item.get("total_spend")
+                if isinstance(category_name, str) and category_name.strip() != "":
+                    top_items.append(f"{category_name} ({total_spend})")
+
+            if top_items:
+                return (
+                    "Based on grounded category-spend results"
+                    f"{_window_suffix(window_label)}, top categories are "
+                    + ", ".join(top_items)
+                    + "."
+                )
+
+        return (
+            "Based on grounded category-spend results"
+            f"{_window_suffix(window_label)}, no category spend rows were returned."
+        )
+
+    if record.tool_name == "get_anomalies":
+        anomaly_events = record.output.get("anomaly_events")
+        if isinstance(anomaly_events, list):
+            return (
+                "Based on grounded anomaly results"
+                f"{_window_suffix(window_label)}, "
+                f"{len(anomaly_events)} anomaly event(s) were found."
+            )
+
+    if record.tool_name == "get_recurring_candidates":
+        recurring = record.output.get("recurring_candidates")
+        if isinstance(recurring, list):
+            return (
+                "Based on grounded recurring-pattern results"
+                f"{_window_suffix(window_label)}, "
+                f"{len(recurring)} recurring candidate(s) were found."
+            )
+
+    if record.tool_name == "search_semantic_memory":
+        count_obj = record.output.get("count")
+        if isinstance(count_obj, int):
+            return (
+                "Based on grounded semantic-memory results, "
+                f"{count_obj} relevant memory item(s) were found."
+            )
+
+    if record.tool_name == "list_recent_goals":
+        count_obj = record.output.get("count")
+        if isinstance(count_obj, int):
+            return f"Based on grounded goal data, {count_obj} recent goal(s) were returned."
+
+    return None
+
+
+def _window_label(output: dict[str, Any]) -> str | None:
+    time_window = output.get("time_window")
+    if not isinstance(time_window, dict):
+        return None
+
+    label = time_window.get("label")
+    if not isinstance(label, str) or label.strip() == "":
+        return None
+
+    return label.replace("_", " ")
+
+
+def _window_suffix(window_label: str | None) -> str:
+    if window_label is None:
+        return ""
+    return f" for {window_label}"
 
 
 def _resolve_citations(

@@ -295,4 +295,4 @@ def test_chat_service_grounds_answer_with_placeholder_account_ids(
     assert answer.tools_used == ["get_category_spend"]
     assert len(answer.citations) == 1
     assert answer.citations[0].payload is not None
-    assert "grounded tool evidence" in answer.answer_text
+    assert "Based on grounded category-spend results" in answer.answer_text

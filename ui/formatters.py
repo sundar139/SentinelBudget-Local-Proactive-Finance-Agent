@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from datetime import date, datetime
+from datetime import UTC, date, datetime
 from decimal import ROUND_HALF_UP, Decimal
 from typing import Any
 
@@ -52,6 +52,25 @@ def format_datetime(value: datetime | None) -> str:
     if value is None:
         return "n/a"
     return value.astimezone().strftime("%Y-%m-%d %H:%M:%S %Z")
+
+
+def format_compact_timestamp(value: datetime | str | None) -> str:
+    if value is None:
+        return "n/a"
+
+    parsed: datetime
+    if isinstance(value, str):
+        try:
+            parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+        except ValueError:
+            return value
+    else:
+        parsed = value
+
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=UTC)
+
+    return parsed.astimezone(UTC).strftime("%Y-%m-%d %H:%M UTC")
 
 
 def severity_rank(severity: str) -> int:

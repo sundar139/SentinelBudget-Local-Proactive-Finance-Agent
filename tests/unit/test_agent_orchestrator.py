@@ -274,7 +274,7 @@ def test_orchestrator_uses_grounded_fallback_for_unstructured_final_output() -> 
         user_message="How is my budget?",
     )
 
-    assert "grounded tool evidence" in answer.answer_text
+    assert "Based on grounded KPI results" in answer.answer_text
     assert any("deterministic grounded fallback" in warning for warning in answer.warnings)
 
 
@@ -313,7 +313,7 @@ def test_orchestrator_uses_grounded_fallback_when_structured_answer_text_missing
         user_message="How much did I spend by category?",
     )
 
-    assert "grounded tool evidence" in answer.answer_text
+    assert "Based on grounded category-spend results" in answer.answer_text
     assert answer.tools_used == ["get_category_spend"]
     assert len(answer.citations) == 1
     assert answer.citations[0].payload is not None

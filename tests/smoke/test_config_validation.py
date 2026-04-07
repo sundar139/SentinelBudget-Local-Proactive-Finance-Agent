@@ -16,7 +16,7 @@ def test_settings_fail_when_required_env_vars_missing(monkeypatch: pytest.Monkey
         monkeypatch.delenv(env_var, raising=False)
 
     with pytest.raises(ValidationError):
-        Settings(_env_file=None)
+        Settings(_env_file=None)  # type: ignore[call-arg]
 
 
 def test_settings_load_when_required_env_vars_present(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -26,7 +26,7 @@ def test_settings_load_when_required_env_vars_present(monkeypatch: pytest.Monkey
     monkeypatch.setenv("POSTGRES_PASSWORD", "secret")
     monkeypatch.setenv("OLLAMA_BASE_URL", "http://localhost:11434")
 
-    settings = Settings(_env_file=None)
+    settings = Settings(_env_file=None)  # type: ignore[call-arg]
 
     assert settings.postgres_host == "localhost"
     assert settings.postgres_db == "sentinelbudget"

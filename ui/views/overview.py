@@ -16,7 +16,12 @@ from ui.components import (
     render_metric_cards,
     render_section_header,
 )
-from ui.formatters import format_money, format_percent, format_window_label
+from ui.formatters import (
+    format_compact_timestamp,
+    format_money,
+    format_percent,
+    format_window_label,
+)
 from ui.helpers import (
     build_monthly_cashflow_points,
     category_chart_rows,
@@ -110,11 +115,14 @@ def render(user_id: UUID, services: UIServices) -> None:
 
     payload = analytics.to_dict()
     kpis = payload["kpis"]
+    time_window = payload.get("time_window", {})
+    start_display = format_compact_timestamp(time_window.get("start_ts"))
+    end_display = format_compact_timestamp(time_window.get("end_ts"))
 
     st.caption(
         "Selected window: "
         f"{format_window_label(window)} | "
-        f"{payload['time_window']['start_ts']} to {payload['time_window']['end_ts']}"
+        f"{start_display} to {end_display}"
     )
 
     render_metric_cards(

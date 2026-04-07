@@ -4,6 +4,7 @@ from datetime import UTC, datetime
 from decimal import Decimal
 
 from ui.formatters import (
+    format_compact_timestamp,
     format_date,
     format_datetime,
     format_money,
@@ -42,3 +43,11 @@ def test_pretty_json_and_window_label() -> None:
     assert '"b": 2' in rendered
     assert format_window_label("last_30_days") == "Last 30 Days"
     assert format_window_label("custom_value") == "custom_value"
+
+
+def test_format_compact_timestamp_for_iso_and_datetime() -> None:
+    iso_value = "2026-03-08T06:06:36.183141+00:00"
+    dt_value = datetime(2026, 3, 8, 6, 6, tzinfo=UTC)
+
+    assert format_compact_timestamp(iso_value) == "2026-03-08 06:06 UTC"
+    assert format_compact_timestamp(dt_value) == "2026-03-08 06:06 UTC"

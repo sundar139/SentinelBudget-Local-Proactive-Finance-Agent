@@ -7,12 +7,24 @@ import streamlit as st
 from sentinelbudget.agent.models import ConversationEntry
 
 from ui.components import render_section_header
+from ui.formatters import format_datetime
 from ui.state import (
     UIServices,
     get_chat_session_id,
     parse_uuid_text,
     set_chat_session_id,
 )
+
+_SUPPRESSED_INLINE_WARNINGS: tuple[str, ...] = (
+    "Model response was not JSON; using deterministic grounded fallback",
+    "Model JSON response was not an object; using deterministic grounded fallback",
+    "answer_text missing in model JSON response",
+)
+
+
+def _is_internal_warning(message: str) -> bool:
+    normalized = message.strip()
+    return any(normalized.startswith(item) for item in _SUPPRESSED_INLINE_WARNINGS)
 
 
 def _render_assistant_metadata(entry: ConversationEntry) -> None:
@@ -60,7 +72,7 @@ def _render_history(entries: list[ConversationEntry]) -> None:
     if tool_events:
         with st.expander("Tool trace events"):
             for item in tool_events:
-                st.caption(str(item.created_at))
+                st.caption(format_datetime(item.created_at))
                 st.code(item.content, language="json")
 
 
@@ -123,15 +135,20 @@ def render(user_id: UUID, services: UIServices) -> None:
 
         with st.chat_message("assistant"):
             st.write(answer.answer_text)
-            if answer.warnings:
-                for warning in answer.warnings:
+            visible_warnings = [item for item in answer.warnings if not _is_internal_warning(item)]
+            if visible_warnings:
+                for warning in visible_warnings:
                     st.warning(warning)
-            if answer.citations:
-                with st.expander("Evidence and tool citations"):
+            if answer.citations or answer.warnings:
+                with st.expander("Evidence, provenance, and warnings"):
                     for citation in answer.citations:
                         st.markdown(f"**{citation.tool_name}**")
                         st.write(citation.evidence)
                         if citation.payload is not None:
                             st.json(citation.payload)
+                    if answer.warnings:
+                        st.write("Warnings")
+                        for warning in answer.warnings:
+                            st.caption(f"- {warning}")
 
         st.rerun()
