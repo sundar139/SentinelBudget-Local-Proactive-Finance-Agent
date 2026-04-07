@@ -400,7 +400,7 @@ If you are extending the project, keep changes aligned with the existing design 
 
 ## License
 
-Add a license section here once the repository license is finalized.
+This project is licensed under the MIT License. See the [LICENSE](./LICENSE) file for details.
 
 ---
 
@@ -414,7 +414,3 @@ That is the right story for this repo:
 - privacy-conscious local execution
 - clear developer ergonomics
 - architecture that stands up in review
-
-## License
-
-This project is licensed under the MIT License. See the [LICENSE](./LICENSE) file for details.
